@@ -1,13 +1,15 @@
 
 from utils import *
+import collections
 
 
 row_units = [cross(r, cols) for r in rows]
 column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-unitlist = row_units + column_units + square_units
-
 # TODO: Update the unit list to add the new diagonal units
+diagonal_units =  [['A1','B2','C3','D4','E5','F6','G7','H8','I9'], ['A9','B8','C7','D6','E5','F4','G3','H2','I1']]
+
+unitlist = row_units + column_units + square_units + diagonal_units
 unitlist = unitlist
 
 
@@ -39,12 +41,33 @@ def naked_twins(values):
     pairs of twins and eliminate another pair of twins before the second pair
     is processed then your code will fail the PA test suite.)
 
-    The first convention is preferred for consistency with the other strategies,
+    The first convention is pre ferred for consistency with the other strategies,
     and because it is simpler (since the reduce_puzzle function already calls this
     strategy repeatedly).
     """
     # TODO: Implement this function!
-    raise NotImplementedError
+    # TODO: for each box [81 key value]=> Get Peers (3 peer units + diagonals if any ) => find naked twins in each peer => eliminate from peers
+    #raise NotImplementedError
+
+    for box in boxes:
+        # Get peer_units (peer - row, col, square and diagonal unit if any) for box
+        for peer_unit in units[box]:
+            # get values for peer_unit
+            peer_unit_values = []
+            for key in peer_unit:
+                peer_unit_values.append(values[key])
+            # find dupes in each peer_unit (9 boxes) values
+            dupes = [item for item, count in collections.Counter(peer_unit_values).items() if count > 1]
+            # filter naked twins from dupes
+            for naked_twin in [dupe for dupe in dupes if len(dupe) == 2]:
+                # eliminate naked twins from peer_unit
+                for peer in peer_unit:
+                    # each box in unit other than the box with value == naked_twin
+                    if values[peer] != naked_twin:
+                        # remove each of the naked twin digit from other boxes in peer_unit
+                        for ch in str(naked_twin):
+                            values[peer] = values[peer].replace(ch,'')
+    return values
 
 
 def eliminate(values):
@@ -124,6 +147,8 @@ def reduce_puzzle(values):
         values = eliminate(values)
         # Use the Only Choice Strategy
         values = only_choice(values)
+        # Use the naked twin strategy
+        values = naked_twins(values)
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         # If no new values were added, stop the loop.
@@ -184,6 +209,21 @@ def solve(grid):
     -------
     dict or False
         The dictionary representation of the final sudoku grid or False if no solution exists.
+    
+    print('row units')
+    print(row_units)
+    print('column units')
+    print(column_units)
+    print('square units')
+    print(square_units)
+    print('diagonal units')
+    print(diagonal_units)
+    print('unit list')
+    print(unitlist)
+    print('units')
+    print(units)
+    print('peers')
+    print(peers)
     """
     values = grid2values(grid)
     values = search(values)
